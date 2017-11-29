@@ -31,7 +31,7 @@ class DFA(FA):
     def is_accepted(self, w):
         return reduce(self.𝛿, w, self.q_0) in self.F
     
-        def minimize(self):
+    def minimize(self):
         states = list(self.Q)
         alpha = list(self.Σ)
         initial_state = self.q_0
