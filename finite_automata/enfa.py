@@ -2,7 +2,8 @@ from functools import reduce
 import pygraphviz as pgv
 import itertools
 from collections import defaultdict
-from .fa import FA
+from finite_automata.fa import FA
+from finite_automata.dfa import DFA
 
 
 class ENFA(FA):
