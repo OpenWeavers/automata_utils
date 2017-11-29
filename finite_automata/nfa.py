@@ -2,7 +2,8 @@ from functools import reduce
 import pygraphviz as pgv
 import itertools
 from collections import defaultdict
-from .fa import FA
+from finite_automata.fa import FA
+from finite_automata.dfa import DFA
 
 
 class NFA(FA):
@@ -70,5 +71,5 @@ if __name__ == '__main__':
             'q0',
             {'q2'})
     m.draw('nfa.png')
-    m.to_dfa().draw('dfa_*ab.png')
+    m.to_dfa().rename().draw('dfa_*ab.png')
     m.is_accepted('aaaaaaababbabbab')
