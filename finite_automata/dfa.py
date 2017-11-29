@@ -25,7 +25,6 @@ class DFA(FA):
         for q, A in self.𝛿_dict.items():
             for a in A:
                 new_delta[rename_func(q)][a] = rename_func(self.𝛿_dict[q][a])
-        print(Q,q_0,F,new_delta,sep='\n')
         return DFA(Q, self.Σ, new_delta, q_0, F)
 
     def is_accepted(self, w):
