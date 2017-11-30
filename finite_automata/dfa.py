@@ -39,7 +39,7 @@ class DFA(FA):
         initial_state = self.q_0
         final_states = list(self.F)
 
-        #print(initial_state, states)
+        # print(initial_state, states)
 
         a = {}
 
@@ -177,7 +177,7 @@ class DFA(FA):
 
         return DFA(set(sorted(table)), set(alpha), fin, fin_init, set(fin_final))
 
-    def draw(self, filename):
+    def draw(self, filename, prog='dot'):
         G = pgv.AGraph(directed=True, rankdir='LR')
         G.add_node('qi', shape='point')
         for q in self.Q:
@@ -192,30 +192,30 @@ class DFA(FA):
     def union(self, M):
         assert self.Σ == M.Σ
         Q = {(x, y) for x in self.Q for y in M.Q}
-        delta_dict = {(x, y): {a: (self.𝛿(x, a), M.𝛿(y, a)) for a in self.Σ} for (x, y) in Q}
+        delta_dict = {(x, y): {a: (self.δ(x, a), M.δ(y, a)) for a in self.Σ} for (x, y) in Q}
         F = {(x, y) for x in self.Q for y in M.Q if x in self.F or y in M.F}
         return DFA(Q, self.Σ, delta_dict, (self.q_0, M.q_0), F)
 
     def intersection(self, M):
         assert self.Σ == M.Σ
         Q = {(x, y) for x in self.Q for y in M.Q}
-        delta_dict = {(x, y): {a: (self.𝛿(x, a), M.𝛿(y, a)) for a in self.Σ} for (x, y) in Q}
+        delta_dict = {(x, y): {a: (self.δ(x, a), M.δ(y, a)) for a in self.Σ} for (x, y) in Q}
         F = {(x, y) for x in self.F for y in M.F}
         return DFA(Q, self.Σ, delta_dict, (self.q_0, M.q_0), F)
 
     def difference(self, M):
         assert self.Σ == M.Σ
         Q = {(x, y) for x in self.Q for y in M.Q}
-        delta_dict = {(x, y): {a: (self.𝛿(x, a), M.𝛿(y, a)) for a in self.Σ} for (x, y) in Q}
+        delta_dict = {(x, y): {a: (self.δ(x, a), M.δ(y, a)) for a in self.Σ} for (x, y) in Q}
         F = {(x, y) for x in self.F for y in M.F if x in self.F and y not in M.F}
         return DFA(Q, self.Σ, delta_dict, (self.q_0, M.q_0), F)
 
     def to_enfa(self):
         from finite_automata.enfa import ENFA
         delta_dict = defaultdict(dict)
-        for u in self.𝛿_dict:
-            for a in self.𝛿_dict[u]:
-                delta_dict[u][a] = frozenset({self.𝛿(u, a)})
+        for u in self.δ_dict:
+            for a in self.δ_dict[u]:
+                delta_dict[u][a] = frozenset({self.δ(u, a)})
             delta_dict[u]['ϵ'] = frozenset()
         return ENFA(self.Q, self.Σ, delta_dict, self.q_0, self.F)
 
@@ -230,7 +230,6 @@ if __name__ == '__main__':
             {'q0'})
     m.draw('dfa.png')
     print(m.is_accepted('aaaba'))
-    m.minimize().draw('dfa_minimized.png')
     n = DFA({'q0', 'q1'},
             {'a', 'b'},
             {'q0': {'a': 'q0', 'b': 'q1'},
@@ -238,3 +237,4 @@ if __name__ == '__main__':
              },
             'q0',
             {'q0'})
+    m.union(n).minimize().draw('dfa_minimized.png')
