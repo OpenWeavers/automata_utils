@@ -102,5 +102,8 @@ if __name__ == '__main__':
     )
     s = ENFA(set(s_q), set(s_sigma), s_delta, 'q0', {'q5'})
     print(s.is_accepted(map(lambda x: '+,-' if '+' in x or '-' in x else '0,1,...,9' if x.isdigit() else x, '-.23')))
+    s = ENFA({'q0','q1'}, {'a', 'b'}, {'q0': dict(zip({'a', 'b', 'ϵ'}, [frozenset(), frozenset(), frozenset({'q1'})])),
+                                     'q1': dict(zip({'a', 'b', 'ϵ'}, [frozenset(), frozenset(), frozenset()]))}, 'q0',
+             set())
     s.draw('digit.png')
     s.to_dfa().draw('digitdfa.png')
