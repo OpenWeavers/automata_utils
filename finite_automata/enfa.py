@@ -7,44 +7,44 @@ from finite_automata.dfa import DFA
 
 
 class ENFA(FA):
-    def __init__(self, Q, Σ, 𝛿_dict, q_0, F):
+    def __init__(self, Q, Σ, δ_dict, q_0, F):
         def set_combi(s, r):
             for i in itertools.combinations(s, r):
                 yield frozenset(i)
 
         self.P_Q = set(itertools.chain.from_iterable(set_combi(Q, r) for r in range(0, len(Q) + 1)))
         self.extra = {'ϵ'}
-        assert set(𝛿_dict.keys()).intersection(Q) == Q
+        assert set(δ_dict.keys()).intersection(Q) == Q
         assert all(
-            set(𝛿_dict[d].keys()).intersection(Σ.union({'ϵ'})) == Σ.union({'ϵ'})
-            and all(x in self.P_Q for x in 𝛿_dict[d].values())
-            for d in 𝛿_dict)
+            set(δ_dict[d].keys()).intersection(Σ.union({'ϵ'})) == Σ.union({'ϵ'})
+            and all(x in self.P_Q for x in δ_dict[d].values())
+            for d in δ_dict)
 
         assert q_0 in Q
         assert F <= Q  # Subset or Equal
-        FA.__init__(self, Q, Σ, 𝛿_dict, q_0, F)
+        FA.__init__(self, Q, Σ, δ_dict, q_0, F)
 
     def ϵClosure(self, q):
         res = frozenset({q})
         queue = [q]
         while queue:
             u = queue.pop(0)
-            for v in self.𝛿(u, 'ϵ'):
+            for v in self.δ(u, 'ϵ'):
                 if v not in res:
                     res = res.union({v})
                     queue.append(v)
         return res
 
-    def 𝛿_set(self, Q, a):
+    def δ_set(self, Q, a):
         res = frozenset()
         for q in Q:
-            res = res.union(self.𝛿(q, a))
+            res = res.union(self.δ(q, a))
         res = frozenset(map(lambda x: self.ϵClosure(x), res))
         res = reduce(lambda x, y: x.union(y), res, frozenset())
         return res
 
     def is_accepted(self, w):
-        return reduce(self.𝛿_set, w, self.ϵClosure(self.q_0)).intersection(self.F) != frozenset()
+        return reduce(self.δ_set, w, self.ϵClosure(self.q_0)).intersection(self.F) != frozenset()
 
     def draw(self, filename):
         G = pgv.AGraph(directed=True, rankdir='LR')
@@ -52,8 +52,8 @@ class ENFA(FA):
         for q in self.Q:
             G.add_node(q, shape='oval', peripheries=2 if q in self.F else 1)
         G.add_edge('qi', self.q_0, label='start')
-        for u in self.𝛿_dict:
-            for a, V in self.𝛿_dict[u].items():
+        for u in self.δ_dict:
+            for a, V in self.δ_dict[u].items():
                 for v in V:
                     label = G.get_edge(u, v).attr['label'] + ',' + a if G.has_edge(u, v) else a
                     G.add_edge(u, v, label=label)
@@ -62,18 +62,18 @@ class ENFA(FA):
     def to_dfa(self):
         Q = {self.ϵClosure(self.q_0)}
         queue = [self.ϵClosure(self.q_0)]
-        𝛿_dict = defaultdict(dict)
+        δ_dict = defaultdict(dict)
         while queue:
             current_state = queue.pop(0)
             for a in self.Σ:
-                next_state = self.𝛿_set(current_state, a)
-                𝛿_dict[current_state][a] = next_state
+                next_state = self.δ_set(current_state, a)
+                δ_dict[current_state][a] = next_state
                 if next_state not in Q:
                     Q = Q.union({next_state})
                     queue.append(next_state)
         F = {x for x in Q if x.intersection(self.F) != frozenset()}
         q_0 = self.ϵClosure(self.q_0)
-        return DFA(Q, self.Σ, 𝛿_dict, q_0, F)
+        return DFA(Q, self.Σ, δ_dict, q_0, F)
 
 
 if __name__ == '__main__':
