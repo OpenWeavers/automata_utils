@@ -6,15 +6,15 @@ from finite_automata.fa import FA
 
 
 class DFA(FA):
-    def __init__(self, Q, Σ, 𝛿_dict, q_0, F):
-        assert set(𝛿_dict.keys()).intersection(Q) == Q
+    def __init__(self, Q, Σ, δ_dict, q_0, F):
+        assert set(δ_dict.keys()).intersection(Q) == Q
         assert all(
-            set(𝛿_dict[d].keys()).intersection(Σ) == Σ
-            and all(x in Q for x in 𝛿_dict[d].values())
-            for d in 𝛿_dict)
+            set(δ_dict[d].keys()).intersection(Σ) == Σ
+            and all(x in Q for x in δ_dict[d].values())
+            for d in δ_dict)
         assert q_0 in Q
         assert F <= Q  # Subset or Equal
-        FA.__init__(self, Q, Σ, 𝛿_dict, q_0, F)
+        FA.__init__(self, Q, Σ, δ_dict, q_0, F)
 
     def rename(self):
         rename_dict = dict(zip(self.Q, {'q%s' % i for i in range(len(self.Q))}))
@@ -23,13 +23,13 @@ class DFA(FA):
         q_0 = rename_func(self.q_0)
         F = set(map(rename_func, self.F))
         new_delta = defaultdict(dict)
-        for q, A in self.𝛿_dict.items():
+        for q, A in self.δ_dict.items():
             for a in A:
-                new_delta[rename_func(q)][a] = rename_func(self.𝛿_dict[q][a])
+                new_delta[rename_func(q)][a] = rename_func(self.δ_dict[q][a])
         return DFA(Q, self.Σ, new_delta, q_0, F)
 
     def is_accepted(self, w):
-        return reduce(self.𝛿, w, self.q_0) in self.F
+        return reduce(self.δ, w, self.q_0) in self.F
     
     def minimize(self):
         states = list(self.Q)
@@ -46,7 +46,7 @@ class DFA(FA):
 
         for ele in states:
             for alp in alpha:
-                a[ele].append(self.𝛿_dict[ele][alp])
+                a[ele].append(self.δ_dict[ele][alp])
 
         mat = []
         for i in range(len(states) - 1):
