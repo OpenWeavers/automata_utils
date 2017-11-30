@@ -1,4 +1,3 @@
-import os
 from collections import defaultdict
 from functools import reduce
 import pygraphviz as pgv
@@ -37,7 +36,7 @@ class DFA(FA):
         initial_state = self.q_0
         final_states = list(self.F)
 
-        print(initial_state, states)
+        #print(initial_state, states)
 
         a = {}
 
@@ -52,26 +51,6 @@ class DFA(FA):
         for i in range(len(states) - 1):
             mat.append([0 for i in range(i + 1)])
             [mat[i].append(-1) for j in range(i + 1, len(states) - 1)]
-
-        # input dfa graph generation
-
-        G = pgv.AGraph(directed=True, rankdir='LR')
-        G.add_node('qi', shape='point')
-        G.add_node(initial_state, color='red')
-        G.add_edge('qi', initial_state)
-        [G.add_node(fs, shape='doublecircle', color='green:green') for fs in final_states]
-        for tab in sorted(a):
-            labels = []
-            temp = tab
-            for i in range(len(alpha)):
-                label = G.get_edge(tab, a[tab][i]).attr['label'] + ',' + alpha[i] if G.has_edge(tab, a[tab][i]) else \
-                alpha[i]
-                G.add_edge(tab, a[tab][i], label=label)
-
-        G.write('in.dot')
-        G.layout()
-        G.draw('in.png', prog='dot')
-        os.system('eog in.png')
 
         # final states position finder
 
@@ -182,49 +161,27 @@ class DFA(FA):
                 fin_init = tab
             [fin_final.append(tab) for fs in final_states if fs in tab]
 
-        # minimised dfa (output) graph
-
-        G = pgv.AGraph(directed=True, rankdir='LR')
-        G.add_node(fin_init, color='red')
-        G.add_node('qi', shape='point')
-        G.add_edge('qi', fin_init, label='start')
-        [G.add_node(fs, peripheries=2, color='green:green') for fs in fin_final]
-        for tab in sorted(table):
-            for i in range(len(alpha)):
-                label = G.get_edge(tab, ', '.join(table[tab][i])).attr['label'] + ',' + alpha[i] if G.has_edge(tab,
-                                                                                                               ', '.join(
-                                                                                                                   table[
-                                                                                                                       tab][
-                                                                                                                       i])) else \
-                alpha[i]
-                G.add_edge(tab, ', '.join(table[tab][i]), label=label)
-
-        # output minimised dfa's description
-
-        print("Iniital state of minimal dfa: " + fin_init + '\n')
-        print("Final state of minimal dfa: " + ', '.join(fin_final) + '\n')
-        print("Minimal DFA transition table:\n\n")
-        print("{:<20}".format('States') + ''.join("{:<20}".format(i) for _, i in enumerate(alpha)))
-
+        fin = {}
         for tab in sorted(table):
             strs = [', '.join(i) for i in table[tab]]
-            print("{:<20}".format(tab) + ''.join("{:<20}".format(i) for _, i in enumerate(strs)))
-
-        # print minimised (output) graph
-
-        G.write('out.dot')
-        G.layout()
-        G.draw('out.png', prog='dot')
-        os.system('eog out.png')
-
+            fin[tab] = {}
+            for alp in alpha:
+                # print("{:<20}".format(tab) + ''.join("{:<20}".format(i) for _, i in enumerate(strs)))
+                # print(strs)
+                fin[tab][alp] = strs.pop(0)
+        
+        print("Minimized Successfully")
+        
+        return DFA(set(sorted(table)), set(alpha), fin, fin_init, set(fin_final))
+    
     def draw(self, filename):
         G = pgv.AGraph(directed=True, rankdir='LR')
         G.add_node('qi', shape='point')
         for q in self.Q:
             G.add_node(q, shape='oval', peripheries=2 if q in self.F else 1)
         G.add_edge('qi', self.q_0, label='start')
-        for u in self.𝛿_dict:
-            for a, v in self.𝛿_dict[u].items():
+        for u in self.δ_dict:
+            for a, v in self.δ_dict[u].items():
                 label = G.get_edge(u, v).attr['label'] + ',' + a if G.has_edge(u, v) else a
                 G.add_edge(u, v, label=label)
         G.draw(filename, format='png', prog='dot')
@@ -240,4 +197,4 @@ if __name__ == '__main__':
             {'q0'})
     m.draw('dfa.png')
     print(m.is_accepted('aaaba'))
-    m.minimize()
+    m.minimize().draw('dfa_minimized.png')
