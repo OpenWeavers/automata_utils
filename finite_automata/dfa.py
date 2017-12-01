@@ -210,6 +210,58 @@ class DFA(FA):
         F = {(x, y) for x in self.F for y in M.F if x in self.F and y not in M.F}
         return DFA(Q, self.Σ, delta_dict, (self.q_0, M.q_0), F)
 
+    def compliment(self):
+        return DFA(self.Q, self.Σ, self.δ_dict, self.q_0, self.Q - self.F)
+
+    def reduce(self):
+        state_pairs = {frozenset({x, y}) for x in self.Q for y in self.Q if x != y}
+        non_distinguishable_pairs = set()
+        non_distinguishable_states = set()
+        distinguishable_pairs = {x for x in state_pairs if len(set(x).intersection(self.F)) == 1}
+
+        def is_distinguishable(pair):
+            # Recursive Discovery of Distinguishable Pairs with Memory Function
+            if len(pair) == 1:
+                return False
+            if pair in distinguishable_pairs:
+                return True
+            else:
+                for a in self.Σ:
+                    next_pair = frozenset(map(lambda x: self.δ(x, a), pair))
+                    if is_distinguishable(next_pair):
+                        distinguishable_pairs.update({pair})
+                        return True
+                return False
+
+        for pair in state_pairs:
+            if not is_distinguishable(pair):
+                non_distinguishable_pairs.update({pair})
+                non_distinguishable_states.update(pair)
+
+        def transitive_closure(array):
+            new_list = [frozenset(array.pop(0))]  # initialize first set with value of index `0`
+
+            for item in array:
+                for i, s in enumerate(new_list):
+                    if any(x in s for x in item):
+                        new_list[i] = new_list[i].union(item)
+                        break
+                else:
+                    new_list.append(frozenset(item))
+            return set(new_list)
+
+        non_distinguishable_pairs = transitive_closure(list(non_distinguishable_pairs))
+
+        Q = non_distinguishable_pairs.union({frozenset(x) for x in self.Q - non_distinguishable_states})
+        delta_dict = defaultdict(dict)
+        for q in Q:
+            for a in self.Σ:
+                delta_dict[q][a] = list({x for x in Q if x.intersection(set(map(lambda x:self.δ(x,a),q)))})[0]
+        q_0 = [x for x in Q if self.q_0 in x][0]
+        F = {x for x in Q if x.intersection(self.F)}
+        print(Q, set(delta_dict[list(Q)[0]].values()), sep='\n')
+        return DFA(Q, self.Σ, delta_dict, q_0, F)
+
     def to_enfa(self):
         from finite_automata.enfa import ENFA
         delta_dict = defaultdict(dict)
@@ -237,4 +289,22 @@ if __name__ == '__main__':
              },
             'q0',
             {'q0'})
-    m.union(n).minimize().draw('dfa_minimized.png')
+    o = DFA({'C', 'D', 'E'},
+            {0, 1},
+            {'C': {0: 'D', 1: 'E'},
+             'D': {0: 'D', 1: 'E'},
+             'E': {0: 'C', 1: 'E'}},
+            'C',
+            {'C', 'D'})
+    import string
+
+    p_q = list(string.ascii_uppercase[:8])
+    p_sigma = [0, 1]
+    p_f = {'C'}
+    p_q0 = 'A'
+    p_delta = ['BF', 'GC', 'AC', 'CG', 'HF', 'CG', 'GE', 'GC']
+    p_delta = [dict(zip(p_sigma, list(x))) for x in p_delta]
+    p_delta = dict(zip(p_q, p_delta))
+    p = DFA(set(p_q), set(p_sigma), p_delta, p_q0, p_f)
+    p.draw('dfa.png')
+    p.reduce().draw('dfa_minimized.png')
